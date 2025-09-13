@@ -210,6 +210,9 @@ namespace jp.nyatla.kokolink.io.audioif
 
         // 読み出しポインタ（AudioClip内サンプルインデックス）
         private int _readPos;
+        
+        // AudioClipのサンプル数をキャッシュ（メインスレッドでのみ取得）
+        private int _totalSamples;
 
         public static IList<(int id, string name)> GetDevices()
         {
@@ -256,6 +259,9 @@ namespace jp.nyatla.kokolink.io.audioif
             // 開始まで待機
             while (Microphone.GetPosition(_deviceName) <= 0) { }
 
+            // メインスレッドでサンプル数を取得してキャッシュ
+            _totalSamples = _clip.samples;
+            
             _readPos = 0;
             _running = true;
             _playNowFlag = true;
@@ -303,7 +309,8 @@ namespace jp.nyatla.kokolink.io.audioif
         private void ReadLoop()
         {
             var buf = new float[_sampleRate * _channels]; // 1秒分最大
-            int totalSamples = _clip.samples;
+            // キャッシュされたサンプル数を使用（メインスレッドで取得済み）
+            int totalSamples = _totalSamples;
 
             while (_running && _clip != null)
             {
