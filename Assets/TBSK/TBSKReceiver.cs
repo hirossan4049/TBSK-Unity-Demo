@@ -27,7 +27,7 @@ public class UnifiedTBSKReceiver : MonoBehaviour
 
     [Header("Decode Triggering")]
     [SerializeField] private bool decodeOnSilence = true; // サイレンス検出でデコード
-    [SerializeField] private float silenceRmsThreshold = 0.02f; // サイレンス判定RMS
+    [SerializeField] private float silenceRmsThreshold = 0.2f; // サイレンス判定RMS
     [SerializeField] private float silenceHoldTime = 0.4f; // 連続サイレンス時間
     [SerializeField] private float minBufferSeconds = 0.8f; // デコードに必要な最小バッファ秒
     
