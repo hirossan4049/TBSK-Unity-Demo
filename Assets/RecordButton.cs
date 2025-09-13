@@ -14,6 +14,8 @@ public class RecordButton : MonoBehaviour
     [SerializeField] private string idleText = "Start Recording";
     [SerializeField] private Color recordingColor = Color.red;
     [SerializeField] private Color idleColor = Color.white;
+    [Space]
+    [SerializeField] private Text outputText; // 受信テキスト表示先（任意）
     
     void Start()
     {
@@ -62,6 +64,12 @@ public class RecordButton : MonoBehaviour
         
         // 初期状態を設定
         UpdateButtonUI();
+
+        // 復調メッセージをUIへ反映
+        if (receiver != null)
+        {
+            receiver.MessageDecoded += OnMessageDecoded;
+        }
     }
     
     void Update()
@@ -121,6 +129,27 @@ public class RecordButton : MonoBehaviour
         if (button != null)
         {
             button.onClick.RemoveListener(OnClick);
+        }
+        if (receiver != null)
+        {
+            receiver.MessageDecoded -= OnMessageDecoded;
+        }
+    }
+
+    private void OnMessageDecoded(string msg)
+    {
+        if (outputText != null)
+        {
+            // 追記型。最新のみ表示したい場合は代入に変更
+            if (!string.IsNullOrEmpty(outputText.text))
+            {
+                outputText.text += "\n";
+            }
+            outputText.text += msg;
+        }
+        else
+        {
+            Debug.Log($"[RecordButton] Decoded: {msg}");
         }
     }
 }

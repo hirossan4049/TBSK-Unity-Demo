@@ -55,6 +55,12 @@ public class UnifiedTBSKReceiver : MonoBehaviour
     // パフォーマンス監視
     private int samplesProcessed = 0;
     private float lastProcessTime = 0f;
+
+    // 直近の復調メッセージ（UI等から参照可能）
+    [Header("Output")]
+    [SerializeField] private string lastDecodedMessage = string.Empty;
+    public string LastDecodedMessage => lastDecodedMessage;
+    public event System.Action<string> MessageDecoded; // 外部が購読してUI更新等に使用
     
     void Start()
     {
@@ -468,8 +474,9 @@ public class UnifiedTBSKReceiver : MonoBehaviour
     /// </summary>
     protected virtual void OnMessageDecoded(string message)
     {
-        // 派生クラスでオーバーライド可能
-        // 例: UIに表示、他のシステムに通知など
+        // メインスレッドコンテキストで呼ばれる想定（StartAsyncDecodeのawait継続/同期デコード）
+        lastDecodedMessage = message ?? string.Empty;
+        try { MessageDecoded?.Invoke(lastDecodedMessage); } catch { /* listener side errors ignored */ }
     }
     
     // プロパティ
