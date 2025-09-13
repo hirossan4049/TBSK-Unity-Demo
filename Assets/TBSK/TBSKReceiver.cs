@@ -14,10 +14,13 @@ using jp.nyatla.kokolink.utils.math;
 public class UnifiedTBSKReceiver : MonoBehaviour
 {
     [Header("Recording Settings")]
-    [SerializeField] private bool startRecordingOnStart = true;
+    [SerializeField] private bool startRecordingOnStart = false;
     [SerializeField] private KeyCode recordKey = KeyCode.R;
     [SerializeField] private int sampleRate = 8000;
     [SerializeField] private string deviceName = null; // null = default microphone
+    
+    [Header("Controls")]
+    [SerializeField] private bool enableKeyToggle = false; // キーボードRでトグル（デフォルト無効）
     
     [Header("Performance Settings")]
     [SerializeField] private int ringBufferSeconds = 2; // リングバッファの長さ（秒）
@@ -79,7 +82,14 @@ public class UnifiedTBSKReceiver : MonoBehaviour
             // RMS計算機初期化
             rmsCalculator = new Rms(Math.Max(sampleRate / 100, 10));
             
-            Debug.Log($"Unified TBSK Receiver initialized. Press {recordKey} to toggle recording.");
+            if (enableKeyToggle)
+            {
+                Debug.Log($"Unified TBSK Receiver initialized. Press {recordKey} to toggle recording.");
+            }
+            else
+            {
+                Debug.Log("Unified TBSK Receiver initialized.");
+            }
         }
         catch (Exception ex)
         {
@@ -106,7 +116,7 @@ public class UnifiedTBSKReceiver : MonoBehaviour
     void Update()
     {
         // 録音トグル
-        if (Input.GetKeyDown(recordKey))
+        if (enableKeyToggle && Input.GetKeyDown(recordKey))
         {
             if (isRecording)
                 StopRecording();
@@ -473,9 +483,13 @@ public class UnifiedTBSKReceiver : MonoBehaviour
         StopRecording();
     }
     
+    [Header("Lifecycle")]
+    [SerializeField] private bool stopOnPause = false; // 一時停止時に停止
+    [SerializeField] private bool stopOnFocusLoss = false; // フォーカス喪失時に停止
+
     void OnApplicationPause(bool pauseStatus)
     {
-        if (pauseStatus)
+        if (pauseStatus && stopOnPause)
         {
             StopRecording();
         }
@@ -483,11 +497,17 @@ public class UnifiedTBSKReceiver : MonoBehaviour
     
     void OnApplicationFocus(bool hasFocus)
     {
-        if (!hasFocus && isRecording)
+        if (!hasFocus && isRecording && stopOnFocusLoss)
         {
             StopRecording();
         }
     }
+
+    // 外部制御用の公開メソッド
+    public void DisableAutoStart() { startRecordingOnStart = false; }
+    public void SetEnableKeyToggle(bool enable) { enableKeyToggle = enable; }
+    public void SetStopOnPause(bool enable) { stopOnPause = enable; }
+    public void SetStopOnFocusLoss(bool enable) { stopOnFocusLoss = enable; }
 }
 
 /// <summary>

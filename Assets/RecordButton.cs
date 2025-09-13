@@ -6,6 +6,8 @@ public class RecordButton : MonoBehaviour
     private UnifiedTBSKReceiver receiver;  // TBSKReceiver → UnifiedTBSKReceiver に変更
     private Button button;
     private Text buttonText;
+    private float lastToggleTime = -1f;
+    [SerializeField] private float toggleDebounceSeconds = 0.2f;
     
     [Header("UI Settings")]
     [SerializeField] private string recordingText = "Stop Recording";
@@ -22,7 +24,26 @@ public class RecordButton : MonoBehaviour
             // シーンに存在しない場合は自動で作成
             var go = new GameObject("TBSKReceiver");
             receiver = go.AddComponent<UnifiedTBSKReceiver>();
+            // 自動作成時は、ボタンでのみ制御する
+            receiver.DisableAutoStart();
+            receiver.SetEnableKeyToggle(false);
+            receiver.SetStopOnPause(false);
+            receiver.SetStopOnFocusLoss(false);
             Debug.Log("UnifiedTBSKReceiver was missing; created a new one at runtime.");
+        }
+        else
+        {
+            // 既存レシーバーでもキーボード操作は無効化
+            receiver.DisableAutoStart();
+            receiver.SetEnableKeyToggle(false);
+            receiver.SetStopOnPause(false);
+            receiver.SetStopOnFocusLoss(false);
+            // 初期状態は必ず停止状態に統一
+            if (receiver.IsRecording)
+            {
+                receiver.StopRecording();
+                Debug.Log("UnifiedTBSKReceiver was recording at start; forced to Stop for button control.");
+            }
         }
         
         // UIコンポーネント取得
@@ -51,6 +72,13 @@ public class RecordButton : MonoBehaviour
     
     private void OnClick()
     {
+        // 連打や二重発火の抑制
+        if (lastToggleTime > 0 && Time.unscaledTime - lastToggleTime < toggleDebounceSeconds)
+        {
+            return;
+        }
+        lastToggleTime = Time.unscaledTime;
+
         if (receiver.IsRecording)
         {
             receiver.StopRecording();
